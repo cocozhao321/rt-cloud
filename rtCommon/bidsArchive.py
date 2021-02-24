@@ -42,6 +42,7 @@ def failIfEmpty(func):
     @functools.wraps(func)
     def emptyFailWrapFunction(*args, **kwargs):
         if args[0].data is None:
+
             raise StateError("Dataset empty")
         else:
             return func(*args, **kwargs)

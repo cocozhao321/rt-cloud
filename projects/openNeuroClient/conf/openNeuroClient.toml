@@ -1,5 +1,5 @@
-title = 'OpenNeuro Client'
-subjectName = "sub-01"
-subjectDay = 1
-runNum = [1]
-scanNum = [1]
+subject = "04"
+task = "flanker"
+suffix = "bold"
+datatype = "func"
+run = 1
