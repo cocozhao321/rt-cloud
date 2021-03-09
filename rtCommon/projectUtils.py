@@ -20,8 +20,10 @@ from rtCommon.imageHandling import readDicomFromBuffer
 from rtCommon.errors import RequestError, StateError, ValidationError
 from requests.packages.urllib3.contrib import pyopenssl
 
-certFile = 'certs/rtcloud.crt'
 
+rootPath = os.getcwd()
+certFile = rootPath +'/certs/rtcloud.crt'
+#certFile = '/certs/rtcloud.crt'
 # Cache of multi-part data transfers in progress
 multiPartDataCache = {}
 dataPartSize = 10 * (2**20)

@@ -12,6 +12,8 @@ one instance of dataInterface, as part of the projectServer with dataRemote=Fals
 import os
 import glob
 import nibabel as nib
+
+from rtCommon.openNeuroService import OpenNeuroOverview
 from rtCommon.remoteable import RemoteableExtensible
 from rtCommon.bidsArchive import BidsArchive
 from rtCommon.bidsIncremental import BidsIncremental
@@ -81,7 +83,7 @@ class BidsInterface(RemoteableExtensible):
             streamId: An identifier used when calling stream functions, such as getIncremental()
         """
         streamId = 1
-        bidsStream = BidsStream(datasetPath, **entities)
+        bidsStream = BidsStream(archivePath, **entities)
         self.streamMap[streamId] = bidsStream
         return streamId
 
@@ -261,8 +263,15 @@ class OpenNeuroStream(BidsStream):
         # TODO - Use OpenNeuroService when it is available, to download
         #   and access the dataset and get dataset entities
         # OpenNeuroService to provide path to dataset
-        datasetPath = tmpDownloadOpenNeuro(dsAccessionNumber, subject, run)
+        overview = OpenNeuroOverview()
+        print('check')
+        print(overview.display_description(dsAccessionNumber))   # print dataset discription
+        print(overview.display_readme(dsAccessionNumber))       # print dataset readme file
+        datasetPath, confPath, type = overview.get_dataset(dsAccessionNumber, False, subject)
+        print('datasetpath',datasetPath,'complete')
+        #datasetPath = tmpDownloadOpenNeuro(dsAccessionNumber, subject, run)
         super().__init__(datasetPath, **entities)
+
 
 
 def tmpDownloadOpenNeuro(dsAccessNumber, subject, run) -> str:

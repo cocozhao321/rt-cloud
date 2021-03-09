@@ -3,6 +3,7 @@ import os
 import sys
 import numpy
 import argparse
+import toml
 
 currPath = os.path.dirname(os.path.realpath(__file__))
 rootPath = os.path.dirname(os.path.dirname(currPath))
@@ -11,20 +12,32 @@ sys.path.append(rootPath)
 # import project modules from rt-cloud
 from rtCommon.utils import loadConfigFile, stringPartialFormat
 from rtCommon.clientInterface import ClientInterface
+import rtCommon.utils as utils
 
 # path for default configuration toml file
 defaultConfig = os.path.join(currPath, 'conf/openNeuroClient.toml')
-
+from rtCommon.bidsArchive import BidsArchive
 
 def doRuns(cfg, bidsInterface, subjInterface, webInterface):
+    archivePath = os.path.join(currPath, "BidsArchive")
+    if os.path.exists(archivePath):
+        utils.deleteFolder(archivePath)
+    archive = BidsArchive(archivePath)
     run = cfg.runNum[0]
     subject = cfg.subjectName
-    entities = {'subject': subject, 'run': run, 'suffix': 'bold', 'datatype': 'func'}
+    try:
+        conf_rootpath = 'tmp/openneuro/{}_{}'.format(cfg.dsAccessionNumber,subject)
+        conf = toml.load(os.path.join(conf_rootpath,'openneuro.toml'))
+        entities = {k: conf for k in ('subject', 'task', 'suffix', 'run', 'datatype')}
+        print(entities)
+    except:
+        entities = {'subject': subject, 'run': run, 'suffix': 'bold', 'datatype': 'func'}
     streamId = bidsInterface.initOpenNeuroStream(cfg.dsAccessionNumber, **entities)
     numVols = bidsInterface.getNumVolumes(streamId)
     webInterface.clearRunPlot(run)
     for idx in range(numVols):
         bidsIncremental = bidsInterface.getIncremental(streamId, idx)
+        archive.appendIncremental(bidsIncremental)
         imageData = bidsIncremental.imageData
         avg_niftiData = numpy.mean(imageData)
         print("| average activation value for TR %d is %f" %(idx, avg_niftiData))
@@ -56,5 +69,5 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()
     sys.exit(0)
