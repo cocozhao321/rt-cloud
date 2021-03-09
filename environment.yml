@@ -30,6 +30,7 @@ dependencies:
   - tornado
   - websocket-client
   - wsaccel
+  - boto3
   - pip:
     - pybids
     - watchdog

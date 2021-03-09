@@ -1,0 +1,14 @@
+title = "Flanker task (event-related)"
+sessionId = ""
+subjectName = "sub-04"
+datestr = "20190219"
+subjectNum = 4
+subjectDay = 1
+sessionNum = ""
+runNum = 1
+imageType = "func"
+subject = "04"
+task = "flanker"
+suffix = "bold"
+datatype = "func"
+run = 1

@@ -1,71 +1,86 @@
 # import important modules
 import os
 import sys
-import numpy
 import argparse
+import time
 import toml
 
 currPath = os.path.dirname(os.path.realpath(__file__))
 rootPath = os.path.dirname(os.path.dirname(currPath))
 sys.path.append(rootPath)
-
+from rtCommon.bidsArchive import BidsArchive
 # import project modules from rt-cloud
 from rtCommon.utils import loadConfigFile, stringPartialFormat
 from rtCommon.clientInterface import ClientInterface
-import rtCommon.utils as utils
+#from rtCommon.bidsInterface import BidsInterface
+from rtCommon.OpenNeuroDownload import OpenNeuroOverview
 
 # path for default configuration toml file
 defaultConfig = os.path.join(currPath, 'conf/openNeuroClient.toml')
-from rtCommon.bidsArchive import BidsArchive
+
 
 def doRuns(cfg, bidsInterface, subjInterface, webInterface):
-    archivePath = os.path.join(currPath, "BidsArchive")
-    if os.path.exists(archivePath):
-        utils.deleteFolder(archivePath)
-    archive = BidsArchive(archivePath)
-    run = cfg.runNum[0]
-    subject = cfg.subjectName
-    try:
-        conf_rootpath = 'tmp/openneuro/{}_{}'.format(cfg.dsAccessionNumber,subject)
-        conf = toml.load(os.path.join(conf_rootpath,'openneuro.toml'))
-        entities = {k: conf for k in ('subject', 'task', 'suffix', 'run', 'datatype')}
-        print(entities)
-    except:
-        entities = {'subject': subject, 'run': run, 'suffix': 'bold', 'datatype': 'func'}
-    streamId = bidsInterface.initOpenNeuroStream(cfg.dsAccessionNumber, **entities)
-    numVols = bidsInterface.getNumVolumes(streamId)
-    webInterface.clearRunPlot(run)
-    for idx in range(numVols):
-        bidsIncremental = bidsInterface.getIncremental(streamId, idx)
-        archive.appendIncremental(bidsIncremental)
-        imageData = bidsIncremental.imageData
-        avg_niftiData = numpy.mean(imageData)
-        print("| average activation value for TR %d is %f" %(idx, avg_niftiData))
-        webInterface.plotDataPoint(run, idx, float(avg_niftiData))
-
-
+    #openNeuro Example
+    overview = OpenNeuroOverview()  # initialize OpenNeuroOverview
+    print(overview.display_description("ds000102"))  # check description before download
+    print(overview.display_readme("ds000102"))  # check readme file (if exists) before download
+    # download a subject's data only and reformat it as BIDS-I
+    dataset = overview.get_dataset("ds000102", False, "05")  # get dataset based on accession number and id
+    loaded_cfg = toml.load(dataset[1])
+    required_metadata = {k: loaded_cfg[k] for k in ('subject', 'task', 'suffix','run','datatype')}
+    required_metadata['task'] = 'flanker'
+    print(required_metadata)
+    streamId = bidsInterface.init_bids_stream('ds000102_sub05', required_metadata,
+                                              'archive')
+    print(streamId)
+    start = time.time()
+    for i in range(100):
+        next_img = bidsInterface.get_next_img(streamId)
+        print(next_img)
+        #time.sleep(.1)
+    end = time.time()
+    print(end-start)
+    """
+    # local dataset example
+    required_metadata = cfg
+    streamId = bidsInterface.init_bids_stream('ds000102', required_metadata, 'archive')
+    print(streamId)
+    start = time.time()
+    for i in range(100):
+        next_img = bidsInterface.get_next_img(streamId)
+        print(next_img)
+        #time.sleep(.1)
+    end = time.time()
+    print(end - start)
+    """
 def main(argv=None):
     argParser = argparse.ArgumentParser()
     argParser.add_argument('--config', '-c', default=defaultConfig, type=str,
                            help='experiment config file (.json or .toml)')
-    argParser.add_argument('--runs', '-r', default=None, type=str,
+    argParser.add_argument('--runs', '-r', default='', type=str,
                            help='Comma separated list of run numbers')
-    argParser.add_argument('--yesToPrompts', '-y', default=False, action='store_true',
-                           help='automatically answer tyes to any prompts')
+    argParser.add_argument('--scans', '-s', default='', type=str,
+                           help='Comma separated list of scan number')
     args = argParser.parse_args(argv)
+
 
     # Initialize the RPC connection to the projectInterface
     # This will give us a dataInterface for retrieving files and
     # a subjectInterface for giving feedback
-    clientInterfaces = ClientInterface(yesToPrompts=args.yesToPrompts)
+    clientInterfaces = ClientInterface()
     bidsInterface = clientInterfaces.bidsInterface
     subjInterface = clientInterfaces.subjInterface
     webInterface  = clientInterfaces.webInterface
+    res = bidsInterface.echo("test")
+    print(res)
 
     # load the experiment configuration file
-    cfg = loadConfigFile(args.config)
+    #TODO: check why loadConfigFile not works
+    # cfg = loadConfigFile(args.config)
+    cfg = toml.load(args.config)
     doRuns(cfg, bidsInterface, subjInterface, webInterface)
-    return 0
+
+    return
 
 
 if __name__ == "__main__":

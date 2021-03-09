@@ -1,0 +1,11 @@
+title = "Flanker task (event-related)"
+sessionId = ""
+subjectName = "sub-05"
+subjectNum = ""
+subjectDay = 1
+sessionNum = ""
+task = ""
+suffix = "bold"
+datatype = "func"
+run = 1
+subject = "05"

@@ -1,13 +1,5 @@
-title = 'OpenNeuro Client'
-dsAccessionNumber = 'ds000102'
-subjectName = "02"
-subjectDay = 1
-runNum = [1]
-scanNum = [1]
-
-plotTitle = 'Realtime Plot'
-plotXLabel = 'Volume #'
-plotYLabel = 'Value'
-plotAutoRangeX = true
-plotAutoRangeY = true
-
+subject = "04"
+task = "flanker"
+suffix = "bold"
+datatype = "func"
+run = 1
